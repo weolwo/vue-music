@@ -1,11 +1,103 @@
 <template>
-  <div>
-    歌手页面
+  <div class="singer" ref="singer">
   </div>
 </template>
-
+<!--[ 数据格式
+{
+"Farea": "1",
+"Fattribute_3": "3",
+"Fattribute_4": "0",
+"Fgenre": "0",
+"Findex": "X",
+"Fother_name": "Joker",
+"Fsinger_id": "5062",
+"Fsinger_mid": "002J4UUk29y8BY",
+"Fsinger_name": "薛之谦",
+"Fsinger_tag": "541,555",
+"Fsort": "1",
+"Ftrend": "0",
+"Ftype": "0",
+"voc": "0"
+}]-->
 <script type="text/ecmascript-6">
+  import {getSingerList} from '../../api/singer'
+  import {ERR_OK} from '../../api/config'
+  import Singer from '../../common/js/singer'
+
+  const HOT_SINGER_LEN = 10
+  const HOT_NAME = '热门'
+  export default {
+    data () {
+      return {
+        singers: []
+      }
+    },
+    created () {
+      this._getSingerList()
+    },
+    methods: {
+      _getSingerList () {
+        getSingerList().then((res) => {
+          if (res.code === ERR_OK) {
+            this.singers = this.formatData(res.data.list)
+            console.log(this.singers)
+          }
+        })
+      },
+      formatData (list) {
+        let map = {
+          hot: {
+            title: HOT_NAME,
+            items: []
+          }
+        }
+        list.forEach((item, index) => {
+          if (index < HOT_SINGER_LEN) {
+            map.hot.items.push(new Singer({
+              id: item.Fsinger_mid,
+              name: item.Fsinger_name
+            }))
+          }
+          const key = item.Findex
+          if (!map[key]) {
+            map[key] = {
+              title: key,
+              items: []
+            }
+          }
+          map[key].items.push(new Singer({
+            id: item.Fsinger_mid,
+            name: item.Fsinger_name
+          }))
+        })
+        // 为了得到有序列表，我们需要处理 map
+        let hot = []
+        let ret = []
+
+        //分装数据
+        for (let key in map) { //遍历对象
+          let value = map[key]
+          if (value.title.match(/[a-zA-Z]/)) {
+            ret.push(value)
+          } else if (value.title === HOT_NAME) {
+            hot.push(value)
+          }
+        }
+        //排序 从 A - Z
+        ret.sort((a, b) => {
+          return a.title.charCodeAt(0) - b.title.charCodeAt(0)
+        })
+        //合并数据
+        return hot.concat(ret)
+      }
+    }
+  }
 </script>
 
 <style scoped lang="stylus" rel="stylesheet/stylus">
+  .singer
+    position: fixed
+    top: 88px
+    bottom: 0
+    width: 100%
 </style>
