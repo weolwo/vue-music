@@ -77,7 +77,7 @@
         this.dots = new Array(this.children.length)
       },
       initScroll () {
-        this.slide = new BScorll('.slider', {
+        this.slide = new BScorll(this.$refs.slider, {
           scrollX: true,
           scrollY: false,
           momentum: false,
