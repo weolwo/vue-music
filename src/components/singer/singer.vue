@@ -1,5 +1,6 @@
 <template>
   <div class="singer" ref="singer">
+    <list-view :data="singers"></list-view>
   </div>
 </template>
 <!--[ 数据格式
@@ -23,6 +24,7 @@
   import {getSingerList} from '../../api/singer'
   import {ERR_OK} from '../../api/config'
   import Singer from '../../common/js/singer'
+  import ListView from '../../base/listview/listview'
 
   const HOT_SINGER_LEN = 10
   const HOT_NAME = '热门'
@@ -90,6 +92,9 @@
         //合并数据
         return hot.concat(ret)
       }
+    },
+    components:{
+      ListView
     }
   }
 </script>
