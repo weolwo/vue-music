@@ -1,29 +1,65 @@
 <template>
-<scroll class="listview" :data="data">
-  <ul>
-    <li v-for="(group,index) in data" class="list-group">
-      <h2 class="list-group-title">{{group.title}}</h2>
+  <scroll class="listview" :data="data" ref="listview">
+    <ul>
+      <li v-for="(group,index) in data" class="list-group" ref="listGroup">
+        <h2 class="list-group-title">{{group.title}}</h2>
+        <ul>
+          <li v-for="(item,index) in group.items" class="list-group-item">
+            <img class="avatar" v-lazy="item.avatar"/>
+            <span class="name">{{item.name}}</span>
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <div class="list-shortcut" @touchstart="onShortcutTouchStart" @touchmove.stop.prevent="onShortcutTouchMove">
       <ul>
-        <li v-for="(item,index) in group.items" class="list-group-item">
-          <img class="avatar" v-lazy="item.avatar"/>
-          <span class="name">{{item.name}}</span>
-        </li>
+        <li v-for="(item,index) in shortcutList" class="item" :data-index="index">{{item}}</li>
       </ul>
-    </li>
-  </ul>
-</scroll>
+    </div>
+  </scroll>
 </template>
 
 <script>
   import Scroll from '../scroll/scroll'
+  import {getData} from '../../common/js/dom'
 
+  const ANCHOR_HEIGHT = 18
   export default {
     name: 'listview',
 
-    props:{
-      data:{
-        type:Array,
-        default:[]
+    props: {
+      data: {
+        type: Array,
+        default: []
+      }
+    },
+    created () {
+      this.touch = {}
+    },
+    computed: {
+      shortcutList () {
+        return this.data.map((group) => {
+          return group.title.substr(0, 1)
+        })
+      }
+    },
+    methods: {
+      onShortcutTouchStart (e) {
+        let anchorIndex = getData(e.target, 'index')
+        let fristTouch = e.touches[0] // 表示当前位于 屏幕上的手指列表 取第一个
+        this.touch.y1 = fristTouch.pageY
+        this.touch.anchorIndex = anchorIndex
+        this.scrollTo(anchorIndex)
+      },
+      onShortcutTouchMove (e) {
+        let fristTouch = e.touches[0] // 表示当前位于 屏幕上的手指列表 取第一个
+        this.touch.y2 = fristTouch.pageY
+        let delta = (this.touch.y2 - this.touch.y1) / ANCHOR_HEIGHT | 0
+        let anchorIndex = delta + parseInt(this.touch.anchorIndex)
+        this.scrollTo(anchorIndex)
+      },
+      scrollTo (index) {
+        this.$refs.listview.scrollToElement(this.$refs.listGroup[index], 0)
       }
     },
     components: {

@@ -47,6 +47,14 @@
       refresh() {
         this.scroll && this.scroll.refresh()
       },
+      // 滚动到指定的位置
+      scrollTo() {
+        this.scroll && this.scroll.scrollTo.apply(this.scroll, arguments)
+      },
+      // 滚动到指定的目标元素
+      scrollToElement() {
+        this.scroll && this.scroll.scrollToElement.apply(this.scroll, arguments)
+      }
     },
   watch:{
       data(){
