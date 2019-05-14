@@ -1,5 +1,11 @@
 <template>
-  <scroll class="listview" :data="data" ref="listview">
+  <scroll class="listview"
+          :data="data"
+          ref="listview"
+          :listenScroll="listenScroll"
+          :probe-type="probeType"
+          @scroll="scroll"
+  >
     <ul>
       <li v-for="(group,index) in data" class="list-group" ref="listGroup">
         <h2 class="list-group-title">{{group.title}}</h2>
@@ -13,7 +19,9 @@
     </ul>
     <div class="list-shortcut" @touchstart="onShortcutTouchStart" @touchmove.stop.prevent="onShortcutTouchMove">
       <ul>
-        <li v-for="(item,index) in shortcutList" class="item" :data-index="index">{{item}}</li>
+        <li v-for="(item,index) in shortcutList" class="item" :data-index="index"
+            :class="{'current':currentIndex===index}">{{item}}
+        </li>
       </ul>
     </div>
   </scroll>
@@ -26,15 +34,23 @@
   const ANCHOR_HEIGHT = 18
   export default {
     name: 'listview',
-
+    data () {
+      return {
+        scrollY: -1,
+        currentIndex: 0,
+        probeType: 3
+      }
+    },
     props: {
       data: {
         type: Array,
         default: []
-      }
+      },
     },
     created () {
-      this.touch = {}
+      this.touch = {},
+        this.listenScroll = true
+
     },
     computed: {
       shortcutList () {
@@ -58,8 +74,57 @@
         let anchorIndex = delta + parseInt(this.touch.anchorIndex)
         this.scrollTo(anchorIndex)
       },
+      // 获取到滚动的y坐标值
+      scroll (pos) {
+        this.scrollY = pos.y
+      },
+      _calculateHeight () {
+        this.listheight = []
+        const list = this.$refs.listGroup
+        let height = 0
+        this.listheight.push(height)
+        for (let i = 0; i < list.length; i++) {
+          let item = list[i]
+          height += item.clientWidth
+          this.listheight.push(height)
+        }
+      },
       scrollTo (index) {
+        if (!index && index !== 0) {
+          return
+        } else if (index < 0) {
+          index = 0
+        } else if (index > this.listheight.length - 1) {
+          index = this.listheight.length - 2
+        }
+        this.scrollY = -this.listheight[index]
         this.$refs.listview.scrollToElement(this.$refs.listGroup[index], 0)
+      }
+    },
+    watch: {
+      data () {
+        setTimeout(() => {
+          this._calculateHeight()
+        }, 20)
+      },
+      scrollY (newVal) {
+        const listheight = this.listheight
+        // 当滚到顶部时
+        if (newVal > 0) {
+          this.currentIndex = 0
+          return
+        }
+        //滚到中间
+        for (let i = 0; i < listheight.length - 1; i++) {
+          let height1 = listheight[i]
+          let height2 = listheight[i + 1]
+          if (-newVal >= height1 && -newVal < height2) {
+            this.currentIndex = i
+            return
+          }
+        }
+        // 滚动到最底部时
+        this.currentIndex = listheight.length - 2
       }
     },
     components: {
@@ -114,6 +179,7 @@
         padding: 3px
         line-height: 1
         color: $color-text-l
+        font-weight bold
         font-size: $font-size-small
         &.current
           color: $color-theme
