@@ -24,21 +24,29 @@
         </li>
       </ul>
     </div>
+    <div class="list-fixed" ref="fixed" v-show="fixedTitle">
+      <div class="fixed-title">{{fixedTitle}}</div>
+    </div>
+    <div class="loading-container" v-show="!data.length">
+      <loading></loading>
+    </div>
   </scroll>
 </template>
 
 <script>
   import Scroll from '../scroll/scroll'
   import {getData} from '../../common/js/dom'
+  import Loading from '../../base/loading/loading'
 
+  const TITLE_HEIGHT = 30
   const ANCHOR_HEIGHT = 18
   export default {
     name: 'listview',
     data () {
       return {
         scrollY: -1,
+        diff: -1,
         currentIndex: 0,
-        probeType: 3
       }
     },
     props: {
@@ -48,15 +56,21 @@
       },
     },
     created () {
-      this.touch = {},
-        this.listenScroll = true
-
+      this.touch = {}
+      this.listenScroll = true
+      this.probeType = 3
     },
     computed: {
       shortcutList () {
         return this.data.map((group) => {
           return group.title.substr(0, 1)
         })
+      },
+      fixedTitle () {
+        if (this.scrollY > 0) {
+          return ''
+        }
+        return this.data[this.currentIndex] ? this.data[this.currentIndex].title : ''
       }
     },
     methods: {
@@ -85,9 +99,10 @@
         this.listheight.push(height)
         for (let i = 0; i < list.length; i++) {
           let item = list[i]
-          height += item.clientWidth
+          height += item.clientHeight
           this.listheight.push(height)
         }
+        console.log(this.listheight)
       },
       scrollTo (index) {
         if (!index && index !== 0) {
@@ -107,10 +122,10 @@
           this._calculateHeight()
         }, 20)
       },
-      scrollY (newVal) {
+      scrollY (newY) {
         const listheight = this.listheight
         // 当滚到顶部时
-        if (newVal > 0) {
+        if (newY > 0) {
           this.currentIndex = 0
           return
         }
@@ -118,17 +133,27 @@
         for (let i = 0; i < listheight.length - 1; i++) {
           let height1 = listheight[i]
           let height2 = listheight[i + 1]
-          if (-newVal >= height1 && -newVal < height2) {
+          if (-newY >= height1 && -newY < height2) {
             this.currentIndex = i
+            this.diff = height2 + newY
             return
           }
         }
         // 滚动到最底部时
         this.currentIndex = listheight.length - 2
+      },
+      diff (newVal) {
+        let fixedTop = (newVal > 0 && newVal < TITLE_HEIGHT) ? newVal - TITLE_HEIGHT : 0
+        if (this.fixedTop === fixedTop) {
+          return
+        }
+        this.fixedTop = fixedTop
+        this.$refs.fixed.style.transform = `translate3d(0,${fixedTop}px,0)`
       }
     },
     components: {
-      Scroll
+      Scroll,
+      Loading
     }
   }
 </script>
