@@ -7,10 +7,10 @@
           @scroll="scroll"
   >
     <ul>
-      <li v-for="(group,index) in data" class="list-group" ref="listGroup">
+      <li v-for="(group,index) in data" class="list-group" ref="listGroup" >
         <h2 class="list-group-title">{{group.title}}</h2>
         <ul>
-          <li v-for="(item,index) in group.items" class="list-group-item">
+          <li @click="selectedItem(item)" v-for="(item,index) in group.items" class="list-group-item">
             <img class="avatar" v-lazy="item.avatar"/>
             <span class="name">{{item.name}}</span>
           </li>
@@ -74,6 +74,9 @@
       }
     },
     methods: {
+      selectedItem(item){
+        this.$emit('select',item)
+      },
       onShortcutTouchStart (e) {
         let anchorIndex = getData(e.target, 'index')
         let fristTouch = e.touches[0] // 表示当前位于 屏幕上的手指列表 取第一个
