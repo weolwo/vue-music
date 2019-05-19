@@ -5,7 +5,7 @@ import router from './router'
 import store from './store'
 import FastClick from 'fastclick'
 import VueLazyload from 'vue-lazyload'
-import defaultImage from './common/js/config'
+import defaultImage from 'common/image/default.png'
 import 'common/stylus/index.styl'
 
 FastClick.attach(document.body)

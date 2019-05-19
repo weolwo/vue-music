@@ -105,7 +105,6 @@
           height += item.clientHeight
           this.listheight.push(height)
         }
-        console.log(this.listheight)
       },
       scrollTo (index) {
         if (!index && index !== 0) {

@@ -51,7 +51,6 @@
         getSingerList().then((res) => {
           if (res.code === ERR_OK) {
             this.singers = this.formatData(res.data.list)
-            console.log(this.singers)
           }
         })
       },
