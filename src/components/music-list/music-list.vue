@@ -1,6 +1,6 @@
 <template>
   <div class="music-list">
-    <div class="back">
+    <div class="back" @click="back">
       <i class="icon-back"></i>
     </div>
     <h1 class="title" v-html="title"></h1>
@@ -20,10 +20,10 @@
       <div class="song-list-wrapper">
         <song-list :songs="songs"></song-list>
       </div>
+      <div class="loading-container" v-show="!songs.length">
+        <loading></loading>
+      </div>
     </scroll>
-    <div class="loading-container" v-show="!songs.length">
-      <loading></loading>
-    </div>
   </div>
 </template>
 
@@ -31,6 +31,7 @@
   import scroll from '../../base/scroll/scroll'
   import SongList from '../../base/song-list/song-list'
   import Loading from '../../base/loading/loading'
+  import {prefixStyle} from '../../common/js/dom'
 
   const PRO_HEIGHT = 40
   export default {
@@ -77,6 +78,9 @@
       scroll (pos) {
         this.scrollY = pos.y
         console.log(pos.y)
+      },
+      back(){
+        this.$router.back()
       }
     },
     watch: {
@@ -85,28 +89,29 @@
         let zIndex = 0
         let scale = 1
         let blur = 0
-        this.$refs.layer.style['transform'] = `translate3d(0,${translateY}px,0)`
-        this.$refs.layer.style['webkitTransform'] = `translate3d(0,${translateY}px,0)`
+        let transform = prefixStyle('transform')
+        let backdropFilter = prefixStyle('backdrop-filter')
+        this.$refs.layer.style[transform] = `translate3d(0,${translateY}px,0)`
         let precent = Math.abs(newY / this.ImageTranHeight)
         if (newY > 0) {
           scale = 1 + precent
           zIndex = 10
         } else {
           blur = Math.min(20 * precent, 20)
-          this.$refs.filter.style['backdrop-filter'] = `blur(${blur}px)`
-          this.$refs.filter.style['webkitBackdrop-filter'] = `blur(${blur}px)`
+          this.$refs.filter.style[backdropFilter] = `blur(${blur}px)`
         }
         if (newY < this.minTranheight) {
           zIndex = 10
           this.$refs.bgImage.style['paddingTop'] = 0
           this.$refs.bgImage.style['height'] = `${PRO_HEIGHT}px`
+          this.$refs.playBtn.style['display'] = 'none'
         } else {
           this.$refs.bgImage.style['paddingTop'] = '70%'
           this.$refs.bgImage.style['height'] = 0
+          this.$refs.playBtn.style['display'] = ''
         }
         this.$refs.bgImage.style['zIndex'] = zIndex
-        this.$refs.bgImage.style['transform'] = `scale(${scale})`
-        this.$refs.bgImage.style['webkitTransform'] = `scale(${scale})`
+        this.$refs.bgImage.style[transform] = `scale(${scale})`
       }
     }
   }
