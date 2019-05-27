@@ -1,22 +1,210 @@
 <template>
   <div class="player" v-show="playList.length>0">
-    <div class="normal-player" v-show="fullScreen">
-      正在播放
-    </div>
-    <div class="mini-player" v-show="!fullScreen"></div>
+    <transition name="normal" @enter="enter" @after-enter="afterEnter" @leave="leave" @after-leave="afterLeave">
+      <div class="normal-player" ref="normalPlayer" v-show="fullScreen">
+        <div class="background">
+          <img :src="currentSong.image" width="100%" height="100%">
+        </div>
+        <div class="top">
+          <div class="back" @click="back">
+            <i class="icon-back"></i>
+          </div>
+          <h1 class="title" v-html="currentSong.name"></h1>
+          <h2 class="subtitle" v-html="currentSong.singer"></h2>
+        </div>
+        <div class="middle">
+          <div class="middle-l" ref="middleL">
+            <div class="cd-wrapper" ref="cdWrapper">
+              <div class="cd" ref="cd" :class="cdCls">
+                <img class="image" :src="currentSong.image">
+              </div>
+            </div>
+            <div class="playing-lyric-wrapper">
+              <div class="playing-lyric"></div>
+            </div>
+          </div>
+        </div>
+        <div class="bottom">
+          <div class="dot-wrapper">
+          </div>
+          <div class="process-wrapper">
+            <span class="time time-l"></span>
+            <div class="process-bar-wrapper">
+            </div>
+            <span class="time time-r"></span>
+          </div>
+          <div class="operators">
+            <div class="icon i-left">
+              <i class="icon-sequence"></i>
+            </div>
+            <div class="icon i-left">
+              <i class="icon-prev" @click="prev"></i>
+            </div>
+            <div class="icon i-center">
+              <i @click="togglePlaying" :class="playIcon"> </i>
+            </div>
+            <div class="icon i-right">
+              <i class="icon-next" @click="next"></i>
+            </div>
+            <div class="icon i-right">
+              <i class="icon icon-not-favorite"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
+    <transition name="mini">
+      <div class="mini-player" v-show="!fullScreen" @click="open">
+        <div class="icon">
+          <img :src="currentSong.image" width="40" height="40" :class="cdCls">
+        </div>
+        <div class="text">
+          <h2 class="name" v-html="currentSong.name"></h2>
+          <p class="desc" v-html="currentSong.singer"></p>
+        </div>
+        <div class="control">
+          <i @click.stop="togglePlaying" :class="miniIcon"></i>
+        </div>
+        <div class="control">
+          <i class="icon-playlist"></i>
+        </div>
+      </div>
+    </transition>
+    <audio :src="currentSong.url" ref="audio"></audio>
   </div>
 </template>
 <script>
-  import {mapGetters} from 'vuex'
+  import {mapGetters, mapMutations} from 'vuex'
+  import animations from 'create-keyframe-animation'
+  import {prefixStyle} from '../../common/js/dom'
+
+  const transform = prefixStyle('transform')
   export default {
     name: 'player',
 
-    computed:{
+    computed: {
       ...mapGetters([
         'playList',
-        'fullScreen'
+        'fullScreen',
+        'currentSong',
+        'playing',
+        'currentIndex'
 
-      ])
+      ]),
+      playIcon () {
+        return this.playing ? 'icon-play' : 'icon-pause'
+      },
+      miniIcon () {
+        return this.playing ? 'icon-play-mini' : 'icon-pause-mini'
+      },
+      cdCls () {
+        return this.playing ? 'play' : 'play pause'
+      }
+    },
+    methods: {
+      prev () {
+        let index = this.currentIndex + 1
+        if (index === this.playList.length) {
+          index = 0
+        }
+        this.setCurrentIndex(index)
+      },
+      next () {
+        let index = this.currentIndex - 1
+        if (index === -1) {
+          index = this.playList.length - 1
+        }
+        this.setCurrentIndex(index)
+      },
+      togglePlaying () {
+        this.setplaying(!this.playing)
+      },
+      back () {
+        this.setFullScreen(false)
+      },
+      open () {
+        this.setFullScreen(true)
+      },
+      enter (el, done) {
+        const {x, y, scale} = this.getTranPosAndScale()
+        console.log(x, y, scale)
+        let animation = {
+          0: {
+            transform: `translate3d(${x}px,${y}px,0) scale(${scale})`
+          },
+          60: {
+            transform: `translate3d(0,0 scale(1)`
+          },
+          100: {
+            transform: `translate3d(0,0 scale(1.1)`
+          }
+        }
+        // this creates the animation above
+        animations.registerAnimation({
+          name: 'move',
+          // the actual array of animation changes
+          animation,
+          // optional presets for when actually running the animation
+          presets: {
+            duration: 400,
+            easing: 'linear',
+          }
+        })
+        // then run it
+        animations.runAnimation(this.$refs.cdWrapper, 'move', done)
+
+      },
+      afterEnter (el) {
+        animations.unregisterAnimation('move')
+        this.$refs.cdWrapper.style.animation = ''
+      },
+      leave (el, done) {
+        this.$refs.cdWrapper.style.transition = 'all 0.4s'
+        const {x, y, scale} = this.getTranPosAndScale()
+        this.$refs.cdWrapper.style[transform] = `translate3d(${x}px,${y}px,0) scale(${scale})`
+        console.log(x, y, scale)
+        this.$refs.cdWrapper.addEventListener('transitionend', done)
+      },
+      afterLeave (el) {
+        this.$refs.cdWrapper.style[transform] = ''
+        this.$refs.cdWrapper.style.transition = ''
+      },
+      //获取动画坐标
+      getTranPosAndScale () {
+        const targetWidth = 40
+        const paddingLeft = 40
+        const paddingBottom = 30
+        const paddingTop = 80
+        const width = window.innerWidth * 0.8
+        const scale = targetWidth / width
+        const x = -(window.innerWidth / 2 - paddingLeft)
+        const y = window.innerHeight - width / 2 - paddingTop - paddingBottom
+
+        return {
+          scale,
+          x,
+          y
+        }
+      },
+      ...mapMutations({
+        setFullScreen: 'SET_FULLSCREEN',
+        setplaying: 'SET_PLAYING',
+        setCurrentIndex: 'SET_CURRENTINDEX'
+      })
+    },
+    watch: {
+      currentSong () {
+        this.$nextTick(() => {
+          this.$refs.audio.play()
+        })
+      },
+      playing (newPlaying) {
+        this.$nextTick(() => {
+          const audio = this.$refs.audio
+          newPlaying ? audio.play() : audio.pause()
+        })
+      }
+
     }
   }
 </script>
