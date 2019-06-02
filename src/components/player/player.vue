@@ -28,22 +28,23 @@
           <div class="dot-wrapper">
           </div>
           <div class="process-wrapper">
-            <span class="time time-l"></span>
+            <span class="time time-l">{{formatTime(currentTime)}}</span>
             <div class="process-bar-wrapper">
+              <progress-bar :percent="percent" @percentChange="percentChange"></progress-bar>
             </div>
-            <span class="time time-r"></span>
+            <span class="time time-r">{{formatTime(currentSong.duration)}}</span>
           </div>
           <div class="operators">
             <div class="icon i-left">
               <i class="icon-sequence"></i>
             </div>
-            <div class="icon i-left">
+            <div class="icon i-left" :class="clsDisable">
               <i class="icon-prev" @click="prev"></i>
             </div>
-            <div class="icon i-center">
+            <div class="icon i-center" :class="clsDisable">
               <i @click="togglePlaying" :class="playIcon"> </i>
             </div>
-            <div class="icon i-right">
+            <div class="icon i-right" :class="clsDisable">
               <i class="icon-next" @click="next"></i>
             </div>
             <div class="icon i-right">
@@ -70,19 +71,31 @@
         </div>
       </div>
     </transition>
-    <audio :src="currentSong.url" ref="audio"></audio>
+    <audio :src="currentSong.url" ref="audio" @canplay="ready" @error="error" @timeupdate="updateTime"></audio>
   </div>
 </template>
 <script>
   import {mapGetters, mapMutations} from 'vuex'
   import animations from 'create-keyframe-animation'
   import {prefixStyle} from '../../common/js/dom'
+  import ProgressBar from '../../base/progress-bar/progress-bar'
 
   const transform = prefixStyle('transform')
   export default {
     name: 'player',
-
+    components: {
+      ProgressBar
+    },
+    data () {
+      return {
+        songReady: false,
+        currentTime: 0
+      }
+    },
     computed: {
+      percent () {
+        return this.currentTime / this.currentSong.duration
+      },
       ...mapGetters([
         'playList',
         'fullScreen',
@@ -92,31 +105,86 @@
 
       ]),
       playIcon () {
-        return this.playing ? 'icon-play' : 'icon-pause'
+        return !this.playing ? 'icon-play' : 'icon-pause'
       },
       miniIcon () {
-        return this.playing ? 'icon-play-mini' : 'icon-pause-mini'
+        return !this.playing ? 'icon-play-mini' : 'icon-pause-mini'
       },
       cdCls () {
         return this.playing ? 'play' : 'play pause'
+      },
+      //当网络不好或者其他情况导致歌曲不能立即加载时，添加一个灰色样式
+      clsDisable () {
+        return this.songReady ? '' : 'disable'
       }
     },
     methods: {
+      //计算拖动进度条时的时间
+      percentChange (percent) {
+        const audio = this.$refs.audio
+        audio.currentTime = this.currentSong.duration * percent
+        if (!this.playing) {
+          this.togglePlaying()
+        }
+      },
+      //获取音频当前播放的时间
+      updateTime (e) {
+        this.currentTime = e.target.currentTime
+      },
+      // 格式化播放时间
+      formatTime (val) {
+        console.log(val, 'val')
+        let minute = (val / 60) | 0
+        let second = this._pad((val % 60) | 0)
+        return `${minute}:${second}`
+      },
+      // 格式化秒为两位数
+      _pad (num, len = 2) {
+        let length = num.toString().length
+        while (length < len) {
+          num = `0${num}`
+          length++
+        }
+        return num
+      },
+      ready () {
+        this.songReady = true
+      },
+      error () {
+
+      },
       prev () {
+        if (!this.songReady) {
+          return
+        }
         let index = this.currentIndex + 1
         if (index === this.playList.length) {
           index = 0
         }
         this.setCurrentIndex(index)
+        if (!this.playing) {
+          this.togglePlaying()
+        }
+        this.songReady = false
       },
       next () {
+        if (!this.songReady) {
+          return
+        }
         let index = this.currentIndex - 1
         if (index === -1) {
           index = this.playList.length - 1
         }
         this.setCurrentIndex(index)
+        if (!this.playing) {
+          this.togglePlaying()
+        }
+        this.songReady = false
       },
       togglePlaying () {
+        if (!this.songReady) {
+          return
+        }
         this.setplaying(!this.playing)
       },
       back () {
