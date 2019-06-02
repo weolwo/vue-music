@@ -59,7 +59,7 @@
         this.$refs.progress.style.width = `${width}px`
       },
       //点击进度条改变播放时间功能
-      progressClick(e){
+      progressClick (e) {
         this._offset(e.offsetX)
         this.togglePercent()
       }
