@@ -35,8 +35,8 @@
             <span class="time time-r">{{formatTime(currentSong.duration)}}</span>
           </div>
           <div class="operators">
-            <div class="icon i-left">
-              <i class="icon-sequence"></i>
+            <div class="icon i-left" @click="changePlayMode">
+              <i :class="iconMode"></i>
             </div>
             <div class="icon i-left" :class="clsDisable">
               <i class="icon-prev" @click="prev"></i>
@@ -73,13 +73,16 @@
         </div>
       </div>
     </transition>
-    <audio :src="currentSong.url" ref="audio" @canplay="ready" @error="error" @timeupdate="updateTime"></audio>
+    <audio :src="currentSong.url" ref="audio" @canplay="ready" @error="error" @ended="playEnded"
+           @timeupdate="updateTime"></audio>
   </div>
 </template>
 <script>
   import {mapGetters, mapMutations} from 'vuex'
   import animations from 'create-keyframe-animation'
   import {prefixStyle} from '../../common/js/dom'
+  import {playMode} from '../../common/js/config'
+  import {shuffle} from '../../common/js/util'
   import ProgressBar from '../../base/progress-bar/progress-bar'
   import ProgressCircle from '../../base/progress-circle/progress-circle'
 
@@ -106,11 +109,16 @@
         'fullScreen',
         'currentSong',
         'playing',
-        'currentIndex'
+        'currentIndex',
+        'mode',
+        'sequenceList'
 
       ]),
       playIcon () {
         return !this.playing ? 'icon-play' : 'icon-pause'
+      },
+      iconMode () {
+        return this.mode === playMode.sequence ? 'icon-sequence' : this.mode === playMode.loop ? 'icon-loop' : 'icon-random'
       },
       miniIcon () {
         return !this.playing ? 'icon-play-mini' : 'icon-pause-mini'
@@ -124,6 +132,25 @@
       }
     },
     methods: {
+      //切换播放模式
+      changePlayMode () {
+        const mode = (this.mode + 1) % 3
+        this.setMode(mode)
+        let list = null
+        if (this.mode === playMode.random) {
+          list = shuffle(this.sequenceList)
+        } else {
+          list = this.sequenceList
+        }
+        this.resetCurrentIndex(list)
+        this.setPlayList(list) //根据不同的播放模式设置不同的播放列表
+      },
+      resetCurrentIndex (list) {
+        let index = list.findIndex((item) => {
+          return item.id === this.currentSong.id
+        })
+        this.setCurrentIndex(index)
+      },
       //计算拖动进度条时的时间
       percentChange (percent) {
         const audio = this.$refs.audio
@@ -172,6 +199,15 @@
         }
         this.songReady = false
       },
+      //当音乐播放结束后自动播放下一首或者重新播放
+      playEnded () {
+        if (this.mode === playMode.loop) {
+          this.currentTime = 0
+          this.$refs.audio.play()
+        } else {
+          this.next()
+        }
+      },
       next () {
         if (!this.songReady) {
           return
@@ -190,7 +226,7 @@
         if (!this.songReady) {
           return
         }
-        this.setplaying(!this.playing)
+        this.setPlaying(!this.playing)
       },
       back () {
         this.setFullScreen(false)
@@ -200,7 +236,7 @@
       },
       enter (el, done) {
         const {x, y, scale} = this.getTranPosAndScale()
-        console.log(x, y, scale)
+       // console.log(x, y, scale)
         let animation = {
           0: {
             transform: `translate3d(${x}px,${y}px,0) scale(${scale})`
@@ -261,12 +297,17 @@
       },
       ...mapMutations({
         setFullScreen: 'SET_FULLSCREEN',
-        setplaying: 'SET_PLAYING',
-        setCurrentIndex: 'SET_CURRENTINDEX'
+        setPlaying: 'SET_PLAYING',
+        setCurrentIndex: 'SET_CURRENTINDEX',
+        setMode: 'SET_MODE',
+        setPlayList: 'SET_PLAYLIST'
       })
     },
     watch: {
-      currentSong () {
+      currentSong (newVal, oldVal) {
+        if (newVal.id === oldVal.id) {
+          return
+        }
         this.$nextTick(() => {
           this.$refs.audio.play()
         })
