@@ -116,6 +116,9 @@
         }
         this.scrollY = -this.listheight[index]
         this.$refs.listview.scrollToElement(this.$refs.listGroup[index], 0)
+      },
+      refresh(){
+        this.$refs.listview.refresh()
       }
     },
     watch: {

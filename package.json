@@ -19,7 +19,9 @@
     "better-scroll": "^1.15.2",
     "axios": "^0.18.0",
     "vue-lazyload": "^1.2.6",
-    "create-keyframe-animation": "^0.1.0"
+    "create-keyframe-animation": "^0.1.0",
+    "js-base64": "^2.5.1",
+    "lyric-parser": "^1.0.1"
   },
   "devDependencies": {
     "autoprefixer": "^7.1.2",

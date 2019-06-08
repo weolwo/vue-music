@@ -33,10 +33,12 @@
   import Loading from '../../base/loading/loading'
   import {prefixStyle} from '../../common/js/dom'
   import {mapActions} from 'vuex'
+  import {playListMixin} from '../../common/js/mixins'
 
   const PRO_HEIGHT = 40
   export default {
     name: 'music-list',
+    mixins: [playListMixin],
     data () {
       return {
         scrollY: 0
@@ -76,6 +78,11 @@
       this.$refs.list.$el.style.top = `${this.ImageTranHeight}px`
     },
     methods: {
+      handlePlayList(playList){
+        let bottom = playList.length > 0 ? '60px':''
+        this.$refs.list.$el.style.bottom = bottom
+        this.$refs.list.refresh()
+      },
       scroll (pos) {
         this.scrollY = pos.y
         console.log(pos.y)
@@ -134,7 +141,6 @@
   }
 </script>
 
-+
 <style scoped lang="stylus" rel="stylesheet/stylus">
   @import "~common/stylus/variable"
   @import "~common/stylus/mixin"

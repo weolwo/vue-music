@@ -1,17 +1,36 @@
-import {getSongsUrl} from '../../api/song'
+import {getSongsUrl, getLyric} from '../../api/song'
+import {ERR_OK} from '../../api/config'
+import {Base64} from 'js-base64'
+
 export default class Song {
   constructor ({id, mid, singer, name, album, duration, image, url}) {
-      this.id = id,
+    this.id = id,
       this.mid = mid,
       this.singer = singer,
       this.name = name,
       this.album = album,
       this.duration = duration,
       this.filename = `C400${this.mid}.m4a`
-      this.image = image,
+    this.image = image,
       this.url = url
   }
 
+  _getLyric () {
+    //不需要每次歌曲变化都来调这个方法
+    if (this.lyric) {
+      return Promise.resolve(this.lyric)
+    }
+    return new Promise((resolve, reject) => {
+      getLyric(this.mid).then((res) => {
+        if (res.retcode === ERR_OK) {
+          this.lyric = Base64.decode(res.lyric)
+          resolve(this.lyric)
+        } else {
+          reject('not lyric')
+        }
+      })
+    })
+  }
 }
 
 export function createSong (musicData) {
