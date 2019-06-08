@@ -16,7 +16,7 @@
           <div class="recommend-list">
             <h1 class="list-title">热门歌单推荐</h1>
             <ul>
-              <li v-for="(item,index) in discList" class="item">
+              <li v-for="(item,index) in discList" class="item" @click="selectItem(item)">
                 <div class="icon">
                   <img style="width: 60px;height: 60px" v-lazy="item.imgurl"/>
                 </div>
@@ -33,6 +33,7 @@
         <loading></loading>
       </div>
     </scroll>
+    <router-view></router-view>
   </div>
 </template>
 
@@ -43,36 +44,44 @@
   import Scroll from '../../base/scroll/scroll'
   import Loading from '../../base/loading/loading'
   import {playListMixin} from '../../common/js/mixins'
+  import {mapMutations} from 'vuex'
+
   export default {
-    mixins : [playListMixin],
+    mixins: [playListMixin],
     data () {
       return {
         recommends: [],
-        discList:[]
+        discList: []
       }
     },
     components: {
       Slider,
       Scroll,
-      Loading
+      Loading,
     },
     created () {
       this._getRecommend()
       this._getDiscList()
     },
     methods: {
+      selectItem (item) {
+        this.$router.push({
+          path: '/recommend/' + item.dissid
+        })
+        this.setDisc(item)
+      },
       handlePlayList (playList) {
         const bottom = playList.length > 0 ? '60px' : ''
         this.$refs.recommend.style.bottom = bottom
         this.refresh()
       },
-      loadImage(){
-        if (!this.checked){
+      loadImage () {
+        if (!this.checked) {
           this.refresh()
-          this.checked=true
+          this.checked = true
         }
       },
-      refresh(){
+      refresh () {
         this.$refs.scroll.refresh()
       },
       // 获取推荐
@@ -85,12 +94,15 @@
       },
       // 获取歌单列表
       _getDiscList () {
-        getDiscList().then((res)=>{
+        getDiscList().then((res) => {
           if (res.code === ERR_OK) {
-            this.discList=res.data.list
+            this.discList = res.data.list
           }
         })
-      }
+      },
+      ...mapMutations({
+        setDisc: 'SET_DISC'
+      })
     }
   }
 </script>

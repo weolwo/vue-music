@@ -28,5 +28,9 @@ const mutations = {
   [types.SET_MODE] (state, mode) {
     state.mode = mode
   },
+
+  [types.SET_DISC] (state, disc) {
+    state.disc = disc
+  },
 }
 export default mutations
