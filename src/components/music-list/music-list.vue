@@ -18,7 +18,7 @@
             :listenScroll="listenScroll"
             :probe-type="probeType">
       <div class="song-list-wrapper">
-        <song-list @selectItem="selectItem" :songs="songs"></song-list>
+        <song-list @selectItem="selectItem" :songs="songs" :rank="rank"></song-list>
       </div>
       <div class="loading-container" v-show="!songs.length">
         <loading></loading>
@@ -61,6 +61,10 @@
       bgImage: {
         type: String,
         default: ''
+      },
+      rank: {
+        type: Boolean,
+        default: false
       }
     },
     created () {
@@ -78,8 +82,8 @@
       this.$refs.list.$el.style.top = `${this.ImageTranHeight}px`
     },
     methods: {
-      handlePlayList(playList){
-        let bottom = playList.length > 0 ? '60px':''
+      handlePlayList (playList) {
+        let bottom = playList.length > 0 ? '60px' : ''
         this.$refs.list.$el.style.bottom = bottom
         this.$refs.list.refresh()
       },

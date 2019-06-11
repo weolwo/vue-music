@@ -1,69 +1,77 @@
 <template>
   <transition name="slide">
-    <music-list :title="title" :bg-image="bgImage" :songs="songs" :rank="rank"></music-list>
+    <music-list :rank="rank" :title="title" :bg-image="bgImage" :songs="songs"></music-list>
   </transition>
 </template>
 
 <script>
   import MusicList from '../music-list/music-list'
   import {mapGetters} from 'vuex'
-  import {getSongList} from '../../api/recommend'
+  import {getMusicList} from '../../api/rank'
   import {ERR_OK} from '../../api/config'
   import {createSong} from '../../common/js/song'
 
   export default {
-    name: 'disc',
+    name: 'top-list',
     data () {
       return {
-        songs: [],
-        rank: true
+        songs: []
       }
     },
     computed: {
+      rank () {
+        return this.topList
+      },
       title () {
-        return this.disc.dissname
+        return this.topList.topTitle
       },
       bgImage () {
-        return this.disc.imgurl
+        if (this.songs.length) {
+          return this.songs[0].image
+        }
+        return ''
       },
-      ...mapGetters(['disc'])
+      ...mapGetters([
+        'topList'
+      ])
     },
     created () {
-      this._getSongList()
+      this._getMusicList()
     },
     methods: {
-      _getSongList () {
-        if (!this.disc.dissid) { //处理当在歌单详情页刷新时，没数据
+      _getMusicList () {
+        if (!this.topList.id) {
           this.$router.push({
-            path: '/recommend'
+            path: '/rank'
           })
           return
         }
-        getSongList(this.disc.dissid).then((res) => {
-          if (ERR_OK === res.code) {
-            this.songs = this.normalData(res.cdlist[0].songlist)
+        getMusicList(this.topList.id).then((res) => {
+          if (res.code === ERR_OK) {
+            this.songs = this.normalData(res.songlist)
+            console.log(this.songs)
           }
         })
       },
       normalData (list) {
         let ret = []
         list.forEach((musicData) => {
-          if (musicData.songid && musicData.albumid) {
-            ret.push(createSong(musicData))
+          if (musicData.data.songid && musicData.data.albumid) {
+            ret.push(createSong(musicData.data))
           }
         })
         return ret
       }
     },
     components: {
-      MusicList,
-    },
+      MusicList
+    }
   }
 </script>
 
 <style scoped lang="stylus" rel="stylesheet/stylus">
   .slide-enter-active, .slide-leave-active
-    transition: all 0.3s
+    transition: all 0.3s ease
 
   .slide-enter, .slide-leave-to
     transform: translate3d(100%, 0, 0)

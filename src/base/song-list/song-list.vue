@@ -2,6 +2,9 @@
   <div class="song-list">
     <ul>
       <li class="item" v-for="(song, index) in songs" @click="selectedItem(song,index)">
+        <div class="rank" v-show="rank">
+          <span :class="getRankCls(index)" v-text="getRankText(index)"></span>
+        </div>
         <div class="content">
           <h2 class="name">{{song.name}}</h2>
           <p class="desc">{{getDesc(song)}}</p>
@@ -14,18 +17,34 @@
 <script>
   export default {
     name: 'song-list',
-    props:{
-      songs:{
-        type:Array,
-        default:[]
+    props: {
+      songs: {
+        type: Array,
+        default: []
+      },
+      rank: {
+        type: Boolean,
+        default: false
       }
     },
-    methods:{
-      getDesc(song){
+    methods: {
+      getRankCls (index) {
+        if (index <= 2) {
+          return `icon icon${index}`
+        } else {
+          return 'text'
+        }
+      },
+      getRankText (index) {
+        if (index > 2) {
+          return index + 1
+        }
+      },
+      getDesc (song) {
         return `${song.name}/${song.album}`
       },
-      selectedItem(item,index){
-        this.$emit('selectItem',item,index)
+      selectedItem (item, index) {
+        this.$emit('selectItem', item, index)
       }
     }
   }
@@ -52,12 +71,12 @@
           width: 25px
           height: 24px
           background-size: 25px 24px
-         /* &.icon0
+          &.icon0
             bg-image('first')
           &.icon1
             bg-image('second')
           &.icon2
-            bg-image('third')*/
+            bg-image('third')
         .text
           color: $color-theme
           font-size: $font-size-large
