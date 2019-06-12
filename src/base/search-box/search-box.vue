@@ -30,8 +30,9 @@
       clear () {
         this.query = ''
       },
-      setQuery(query){
-        this.query = query
+      setQuery(words){
+        console.log(words,'words')
+        this.query = words
       }
     }
   }

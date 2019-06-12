@@ -1,7 +1,7 @@
 <template>
   <div class="search">
     <div class="search-box-wrapper">
-      <search-box ref="searchBox" @query="queryData"></search-box>
+      <search-box ref="searchBox" @query="onQueryChange"></search-box>
     </div>
     <div ref="shortcutWrapper" class="shortcut-wrapper" v-show="!query">
       <div ref="shortcut" class="shortcut">
@@ -26,9 +26,10 @@
         </div>
       </div>
     </div>
-    <div class="search-result">
+    <div class="search-result" v-show="query">
       <suggest :query="query"></suggest>
     </div>
+    <router-view></router-view>
   </div>
 </template>
 
@@ -49,11 +50,11 @@
       this._getHotKey()
     },
     methods: {
-      queryData (query) {
+      onQueryChange (query) {
         this.query = query
       },
-      addToQuery (query) {
-        this.$refs.searchBox.setQuery(query)
+      addToQuery (words) {
+        this.$refs.searchBox.setQuery(words)
       },
       _getHotKey () {
         getHotKey().then((res) => {
