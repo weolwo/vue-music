@@ -22,7 +22,7 @@
   import Singer from '../../common/js/singer'
   import Scroll from '../../base/scroll/scroll'
   import Loading from '../../base/loading/loading'
-  import {mapMutations} from 'vuex'
+  import {mapMutations,mapActions} from 'vuex'
 
   const SINGER_TYPE = 'singer'
   export default {
@@ -118,12 +118,13 @@
           })
           this.setSinger(singer)
         } else {
-          const song = createSong(item)
+          this.insertSong(item)
         }
       },
       ...mapMutations({
         setSinger: 'SET_SINGER'
-      })
+      }),
+        ...mapActions(['insertSong'])
     },
     watch: {
       query () {
