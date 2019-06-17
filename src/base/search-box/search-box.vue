@@ -8,6 +8,7 @@
 
 <script>
   import {debounce} from '../../common/js/util'
+
   export default {
     name: 'search-box',
     props: {
@@ -24,14 +25,16 @@
     created () {
       this.$watch('query', debounce((newQuery) => {
         this.$emit('query', newQuery)
-      },200))
+      }, 200))
     },
     methods: {
+      blur () {
+        this.$refs.query.blur()
+      },
       clear () {
         this.query = ''
       },
-      setQuery(words){
-        console.log(words,'words')
+      setQuery (words) {
         this.query = words
       }
     }

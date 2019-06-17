@@ -1,5 +1,11 @@
 <template>
-  <scroll ref="suggest" class="suggest" :data="result" :pull-up="pullUp" @scrollToEnd="searchMore">
+  <scroll ref="suggest" class="suggest"
+          :data="result"
+          :pull-up="pullUp"
+          @scrollToEnd="searchMore"
+          :before-scroll="beforeScroll"
+          @beforeScroll="listScroll"
+  >
     <ul class="suggest-list">
       <li @click="selectItem(item)" class="suggest-item" v-for="item in result">
         <div class="icon">
@@ -9,10 +15,11 @@
           <p class="text" v-html="getDisplayName(item)"></p>
         </div>
       </li>
-      <div v-show="hasMore">
-        <Loading></Loading>
-      </div>
+      <Loading v-show="hasMore"></Loading>
     </ul>
+    <div v-show="!hasMore && !result.length" class="no-result-wrapper">
+      <no-result title="抱歉，暂无搜索结果"></no-result>
+    </div>
   </scroll>
 </template>
 
@@ -21,8 +28,9 @@
   import {createSong} from '../../common/js/song'
   import Singer from '../../common/js/singer'
   import Scroll from '../../base/scroll/scroll'
-  import Loading from '../../base/loading/loading'
-  import {mapMutations,mapActions} from 'vuex'
+  import NoResult from '../../base/loading/loading'
+  import Loading from '../../base/no-result/no-result'
+  import {mapMutations, mapActions} from 'vuex'
 
   const SINGER_TYPE = 'singer'
   export default {
@@ -43,10 +51,17 @@
         page: 1,
         prepage: 20,
         pullUp: true,
-        hasMore: true //标志是否还能继续上拉请求数据
+        hasMore: true, //标志是否还能继续上拉请求数据,
+        beforeScroll: true
       }
     },
     methods: {
+      refresh(){
+        this.$refs.suggest.refresh()
+      },
+      listScroll () {
+        this.$emit('listScroll')
+      },
       getDisplayName (item) {
         if (item.type === SINGER_TYPE) {
           return item.singername
@@ -120,11 +135,15 @@
         } else {
           this.insertSong(item)
         }
+        //派发出去一个缓存搜索历史记录的事件
+        this.$emit('select')
       },
       ...mapMutations({
         setSinger: 'SET_SINGER'
       }),
-        ...mapActions(['insertSong'])
+      ...mapActions([
+        'insertSong'
+      ])
     },
     watch: {
       query () {
@@ -133,7 +152,8 @@
     },
     components: {
       Scroll,
-      Loading
+      Loading,
+      NoResult
     }
   }
 </script>
