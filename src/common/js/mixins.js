@@ -1,8 +1,13 @@
-import {mapGetters} from 'vuex'
+import {mapGetters, mapMutations, mapActions} from 'vuex'
+import {playMode} from '../../common/js/config'
+import {shuffle} from '../../common/js/util'
 
 export const playListMixin = {
   computed: {
-    ...mapGetters(['playList'])
+    ...mapGetters([
+      'playList'
+    ]),
+
   },
   mounted () {
     this.handlePlayList(this.playList)
@@ -20,4 +25,80 @@ export const playListMixin = {
       this.handlePlayList(newPlayList)
     }
   }
+}
+
+export const playerMixin = {
+  computed: {
+    ...mapGetters([
+      'playList',
+      'fullScreen',
+      'currentSong',
+      'playing',
+      'currentIndex',
+      'mode',
+      'sequenceList'
+    ]),
+    iconMode () {
+      return this.mode === playMode.sequence ? 'icon-sequence' : this.mode === playMode.loop ? 'icon-loop' : 'icon-random'
+    },
+  },
+  methods: {
+    //切换播放模式
+    changePlayMode () {
+      const mode = (this.mode + 1) % 3
+      this.setMode(mode)
+      let list = null
+      if (this.mode === playMode.random) {
+        list = shuffle(this.sequenceList)
+      } else {
+        list = this.sequenceList
+      }
+      this.resetCurrentIndex(list)
+      this.setPlayList(list) //根据不同的播放模式设置不同的播放列表
+    },
+    resetCurrentIndex (list) {
+      let index = list.findIndex((item) => {
+        return item.id === this.currentSong.id
+      })
+      this.setCurrentIndex(index)
+    },
+    ...mapMutations({
+      setPlaying: 'SET_PLAYING',
+      setCurrentIndex: 'SET_CURRENTINDEX',
+      setMode: 'SET_MODE',
+      setPlayList: 'SET_PLAYLIST'
+    })
+  }
+}
+
+export const searchMixin = {
+  data () {
+    return {
+      query: '',
+      refreshDelay: 100
+    }
+  },
+  methods: {
+    onQueryChange (query) {
+      this.query = query
+    },
+    addToQuery (words) {
+      this.$refs.searchBox.setQuery(words)
+    },
+    saveSearch () {
+      this.saveSearchHistory(this.query)
+    },
+    blurInput () {
+      this.$refs.searchBox.blur()
+    },
+    deleteOne (item) {
+      this.deleteSearchHistory(item)
+    },
+    ...mapActions([
+      'saveSearchHistory',
+      'deleteSearchHistory',
+
+    ])
+  }
+
 }

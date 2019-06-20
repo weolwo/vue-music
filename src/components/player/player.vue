@@ -83,34 +83,38 @@
             <i @click.stop="togglePlaying" class="icon-mini" :class="miniIcon"></i>
           </progress-circle>
         </div>
-        <div class="control">
+        <div class="control" @click.stop="showPlayList">
           <i class="icon-playlist"></i>
         </div>
       </div>
     </transition>
+    <play-list ref="playlist"></play-list>
     <audio :src="currentSong.url" ref="audio" @canplay="ready" @error="error" @ended="playEnded"
            @timeupdate="updateTime"></audio>
   </div>
 </template>
 <script>
-  import {mapGetters, mapMutations} from 'vuex'
+  import {mapGetters, mapMutations,mapActions} from 'vuex'
   import animations from 'create-keyframe-animation'
   import {prefixStyle} from '../../common/js/dom'
   import {playMode} from '../../common/js/config'
-  import {shuffle} from '../../common/js/util'
   import ProgressBar from '../../base/progress-bar/progress-bar'
   import ProgressCircle from '../../base/progress-circle/progress-circle'
   import Lyric from 'lyric-parser'
   import Scroll from '../../base/scroll/scroll'
+  import PlayList from '../playlist/playlist'
+  import {playerMixin} from '../../common/js/mixins'
 
   const transform = prefixStyle('transform')
   const transitionDuration = prefixStyle('transitionDuration')
   export default {
+    mixins:[playerMixin],
     name: 'player',
     components: {
       ProgressBar,
       ProgressCircle,
-      Scroll
+      Scroll,
+      PlayList
     },
     data () {
       return {
@@ -140,9 +144,6 @@
       playIcon () {
         return !this.playing ? 'icon-play' : 'icon-pause'
       },
-      iconMode () {
-        return this.mode === playMode.sequence ? 'icon-sequence' : this.mode === playMode.loop ? 'icon-loop' : 'icon-random'
-      },
       miniIcon () {
         return !this.playing ? 'icon-play-mini' : 'icon-pause-mini'
       },
@@ -163,6 +164,10 @@
         this.touch.initiated = true
         this.touch.startX = e.touches[0].pageX
         this.touch.startY = e.touches[0].pageY
+      },
+      //控制点击mini播放器歌单按钮
+      showPlayList () {
+        this.$refs.playlist.show()
       },
       middleTouchMove (e) {
         if (!this.touch.initiated) {
@@ -231,25 +236,7 @@
         }
         this.playingLyric = txt
       },
-      //切换播放模式
-      changePlayMode () {
-        const mode = (this.mode + 1) % 3
-        this.setMode(mode)
-        let list = null
-        if (this.mode === playMode.random) {
-          list = shuffle(this.sequenceList)
-        } else {
-          list = this.sequenceList
-        }
-        this.resetCurrentIndex(list)
-        this.setPlayList(list) //根据不同的播放模式设置不同的播放列表
-      },
-      resetCurrentIndex (list) {
-        let index = list.findIndex((item) => {
-          return item.id === this.currentSong.id
-        })
-        this.setCurrentIndex(index)
-      },
+
       //计算拖动进度条时的时间
       percentChange (percent) {
         let currentTime = this.currentSong.duration * percent
@@ -285,6 +272,7 @@
       },
       ready () {
         this.songReady = true
+        this.setPlayHistory(this.currentSong);
       },
       error () {
 
@@ -420,14 +408,16 @@
       },
       ...mapMutations({
         setFullScreen: 'SET_FULLSCREEN',
-        setPlaying: 'SET_PLAYING',
-        setCurrentIndex: 'SET_CURRENTINDEX',
-        setMode: 'SET_MODE',
-        setPlayList: 'SET_PLAYLIST'
       }),
+      ...mapActions([
+        'setPlayHistory'
+      ])
     },
     watch: {
       currentSong (newVal, oldVal) {
+        if (!newVal.id){ // 当删除播放列表中所有的歌曲时执行
+          return
+        }
         if (newVal.id === oldVal.id) {
           return
         }

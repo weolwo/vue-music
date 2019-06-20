@@ -1,7 +1,7 @@
 import * as types from './mutation-types'
 import {playMode} from '../common/js/config'
 import {shuffle} from '../common/js/util'
-import {saveSearch,deleteSearch,deleteAllSearch} from '../common/js/cache'
+import {saveSearch, deleteSearch, deleteAllSearch, savePlayHistory} from '../common/js/cache'
 
 //找到当前播放的歌曲在列表中的索引
 function findIndex (list, currentSong) {
@@ -57,6 +57,7 @@ export const insertSong = function ({commit, state}, song) {
   //找到当前歌曲在列表中的索引
   let currentSIndex = findIndex(sequenceList, currentSong) + 1
   let sIndex = findIndex(sequenceList, song)
+  sequenceList.splice(currentSIndex, 0, song)
   if (sIndex > -1) {
     if (currentSIndex > sIndex) {
       sequenceList.splice(sIndex, 1)
@@ -79,6 +80,41 @@ export const deleteSearchHistory = function ({commit, state}, query) {
   commit(types.SET_SEARCH_HISTORY, deleteSearch(query))
 }
 
-export const clearSearchHistory =function ({commit}) {
+export const clearSearchHistory = function ({commit}) {
   commit(types.SET_SEARCH_HISTORY, deleteAllSearch())
+}
+
+//删除列表中的某首歌曲
+export const deleteSong = function ({commit, state}, song) {
+  let playList = state.playList.slice() //由于action中不允许直接修改，所以我们创建了副本
+  let sequenceList = state.sequenceList.slice()
+  let currentIndex = state.currentIndex
+
+  let pIndex = findIndex(playList, song)
+  playList.splice(pIndex, 1)
+  let sIndex = findIndex(sequenceList, song)
+  sequenceList.splice(sIndex, 1)
+  if (currentIndex > pIndex || currentIndex === playList.length) {
+    currentIndex--
+  }
+  commit(types.SET_PLAYLIST, playList)
+  commit(types.SET_SEQUENCELIST, sequenceList)
+  commit(types.SET_CURRENTINDEX, currentIndex)
+  if (!playList.length) {
+    commit(types.SET_PLAYING, false)
+  } else {
+    commit(types.SET_PLAYING, true)
+  }
+}
+
+//清空播放列表
+export const deleteSongList = function ({commit}) {
+  commit(types.SET_PLAYLIST, [])
+  commit(types.SET_SEQUENCELIST, [])
+  commit(types.SET_CURRENTINDEX, -1)
+  commit(types.SET_PLAYING, false)
+}
+
+export const setPlayHistory = function ({commit}, song) {
+  commit(types.SET_PLAY_HISTORY, savePlayHistory(song))
 }

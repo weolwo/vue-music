@@ -1,13 +1,13 @@
 <template>
   <div class="search-list" v-show="searches.length">
-    <ul>
-      <li class="search-item" @click="selectItem(item)" v-for="item in searches">
+    <transition-group name="list" tag="ul">
+      <li class="search-item" @click="selectItem(item)" v-for="item in searches" :key="item">
         <span class="text">{{item}}</span>
         <span class="icon" @click.stop="deleteOne(item)">
           <i class="icon-delete"></i>
         </span>
       </li>
-    </ul>
+    </transition-group>
   </div>
 </template>
 
@@ -20,10 +20,10 @@
       }
     },
     methods: {
-      selectItem(item) {
+      selectItem (item) {
         this.$emit('select', item)
       },
-      deleteOne(item) {
+      deleteOne (item) {
         this.$emit('delete', item)
       }
     }
@@ -38,6 +38,11 @@
       display: flex
       align-items: center
       height: 40px
+      overflow: hidden
+      &.list-enter-active, &.list-leave-active
+        transition: all 0.1s
+      &.list-enter, &.list-leave-to
+        height: 0
       .text
         flex: 1
         color: $color-text-l
