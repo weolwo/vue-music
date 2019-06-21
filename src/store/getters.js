@@ -27,3 +27,6 @@ export const searchHistory = state => state.searchHistory
 
 //播放历史记录
 export const playHistory = state => state.playHistory
+
+//收藏列表
+export const favoriteList = state => state.favoriteList
