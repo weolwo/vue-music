@@ -14,6 +14,10 @@ Vue.use(VueLazyload, {
 })
 Vue.use(store)
 /* eslint-disable no-new */
+import VConsole from 'vconsole';
+/* eslint-disable no-unused-vars */
+new VConsole();
+console.log("test")
 new Vue({
   el: '#app',
   router,
