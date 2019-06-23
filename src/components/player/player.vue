@@ -89,12 +89,12 @@
       </div>
     </transition>
     <play-list ref="playlist"></play-list>
-    <audio :src="currentSong.url" ref="audio" @canplay="ready" @error="error" @ended="playEnded"
+    <audio :src="currentSong.url" ref="audio" @playing="ready" @error="error" @ended="playEnded"
            @timeupdate="updateTime"></audio>
   </div>
 </template>
 <script>
-  import {mapGetters, mapMutations,mapActions} from 'vuex'
+  import {mapGetters, mapMutations, mapActions} from 'vuex'
   import animations from 'create-keyframe-animation'
   import {prefixStyle} from '../../common/js/dom'
   import {playMode} from '../../common/js/config'
@@ -108,7 +108,7 @@
   const transform = prefixStyle('transform')
   const transitionDuration = prefixStyle('transitionDuration')
   export default {
-    mixins:[playerMixin],
+    mixins: [playerMixin],
     name: 'player',
     components: {
       ProgressBar,
@@ -216,6 +216,10 @@
       },
       getLyric () {
         this.currentSong._getLyric().then((lyric) => {
+          //避免歌词new两次,出现歌词乱掉的情况
+          if (this.currentSong.lyric !== lyric) {
+            return
+          }
           this.currentLyric = new Lyric(lyric, this.handlerLyric)
           if (this.playing) {
             this.currentLyric.play()
@@ -272,10 +276,11 @@
       },
       ready () {
         this.songReady = true
-        this.setPlayHistory(this.currentSong);
+        this.setPlayHistory(this.currentSong)
       },
       error () {
-
+        clearTimeout(this.timer)
+        this.songReady = true
       },
       prev () {
         if (!this.songReady) {
@@ -306,6 +311,7 @@
       loop () {
         this.currentTime = 0
         this.$refs.audio.play()
+        this.setPlaying(true)
         //解决循环播放的时候，歌曲播放完了，歌词没有跳转到顶部
         if (this.currentLyric) {
           this.currentLyric.seek(0)
@@ -415,7 +421,7 @@
     },
     watch: {
       currentSong (newVal, oldVal) {
-        if (!newVal.id){ // 当删除播放列表中所有的歌曲时执行
+        if (!newVal.id || !newVal.url) { // 当删除播放列表中所有的歌曲时执行
           return
         }
         if (newVal.id === oldVal.id) {
@@ -426,7 +432,8 @@
           this.currentLyric.stop()
         }
         //解决微信后台切换到前台时，歌曲有重新在播放
-        setTimeout(() => {
+        clearTimeout(this.timer)
+        this.timer = setTimeout(() => {
           this.$refs.audio.play()
           this.getLyric()
         }, 1000)
